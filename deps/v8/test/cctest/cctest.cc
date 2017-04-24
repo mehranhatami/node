@@ -30,6 +30,8 @@
 
 #include "include/libplatform/libplatform.h"
 #include "src/debug/debug.h"
+#include "src/objects-inl.h"
+#include "src/trap-handler/trap-handler.h"
 #include "test/cctest/print-extension.h"
 #include "test/cctest/profiler-extension.h"
 #include "test/cctest/trace-extension.h"
@@ -41,8 +43,8 @@
 #endif
 #endif
 
-enum InitializationState {kUnset, kUnintialized, kInitialized};
-static InitializationState initialization_state_  = kUnset;
+enum InitializationState { kUnset, kUninitialized, kInitialized };
+static InitializationState initialization_state_ = kUnset;
 static bool disable_automatic_dispose_ = false;
 
 CcTest* CcTest::last_ = NULL;
@@ -81,10 +83,10 @@ CcTest::CcTest(TestFunction* callback, const char* file, const char* name,
 void CcTest::Run() {
   if (!initialize_) {
     CHECK(initialization_state_ != kInitialized);
-    initialization_state_ = kUnintialized;
+    initialization_state_ = kUninitialized;
     CHECK(CcTest::isolate_ == NULL);
   } else {
-    CHECK(initialization_state_ != kUnintialized);
+    CHECK(initialization_state_ != kUninitialized);
     initialization_state_ = kInitialized;
     if (isolate_ == NULL) {
       v8::Isolate::CreateParams create_params;
@@ -155,7 +157,7 @@ v8::Local<v8::Context> CcTest::NewContext(CcTestExtensionFlags extensions,
 
 
 void CcTest::DisableAutomaticDispose() {
-  CHECK_EQ(kUnintialized, initialization_state_);
+  CHECK_EQ(kUninitialized, initialization_state_);
   disable_automatic_dispose_ = true;
 }
 
@@ -266,6 +268,10 @@ int main(int argc, char* argv[]) {
   v8::internal::FlagList::SetFlagsFromCommandLine(&argc, argv, true);
   v8::V8::Initialize();
   v8::V8::InitializeExternalStartupData(argv[0]);
+
+  if (i::trap_handler::UseTrapHandler()) {
+    v8::V8::RegisterDefaultSignalHandler();
+  }
 
   CcTestArrayBufferAllocator array_buffer_allocator;
   CcTest::set_array_buffer_allocator(&array_buffer_allocator);

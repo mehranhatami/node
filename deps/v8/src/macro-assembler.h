@@ -41,7 +41,6 @@ enum AllocationFlags {
 #elif V8_TARGET_ARCH_ARM64
 #include "src/arm64/constants-arm64.h"
 #include "src/arm64/macro-assembler-arm64.h"
-#include "src/arm64/macro-assembler-arm64-inl.h"
 #elif V8_TARGET_ARCH_ARM
 #include "src/arm/constants-arm.h"
 #include "src/arm/macro-assembler-arm.h"
@@ -65,6 +64,9 @@ enum AllocationFlags {
 
 namespace v8 {
 namespace internal {
+
+// Simulators only support C calls with up to kMaxCParameters parameters.
+static constexpr int kMaxCParameters = 9;
 
 class FrameScope {
  public:
